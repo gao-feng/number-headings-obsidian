@@ -78,6 +78,21 @@ export const updateHeadingNumbering = (
   const editor = viewInfo.editor
   const supportFlags = createSupportFlagsFromSettings(settings.styleLevel1, settings.styleLevelOther)
 
+  // Auto-detect the top-level heading if enabled
+  let autoDetectedLevel: number | undefined
+  if (settings.autoDetectTopLevel && headings.length > 0) {
+    const minLevel = Math.min(...headings.map(h => h.level))
+    autoDetectedLevel = minLevel
+  }
+
+  // Auto-detect the first heading level when no explicit first-level is set
+  // and auto-detect is not enabled. This handles cases where documents start with
+  // ## instead of #.
+  let firstHeadingLevel: number | undefined
+  if (headings.length > 0 && !settings.autoDetectTopLevel && settings.firstLevel === 1) {
+    firstHeadingLevel = headings[0].level
+  }
+
   let previousLevel = 1
 
   let numberingStack: NumberingToken[] = [startAtOrZerothInStyle(settings.startAt, settings.styleLevel1)]
@@ -86,6 +101,10 @@ export const updateHeadingNumbering = (
     previousLevel = settings.firstLevel
   } else if (settings.skipTopLevel) {
     previousLevel = 2
+  } else if (autoDetectedLevel !== undefined) {
+    previousLevel = autoDetectedLevel
+  } else if (firstHeadingLevel !== undefined && firstHeadingLevel > 1) {
+    previousLevel = firstHeadingLevel
   }
 
   const changes: EditorChange[] = []
@@ -93,10 +112,20 @@ export const updateHeadingNumbering = (
   for (const heading of headings) {
     // Update the numbering stack based on the level and previous level
 
-    const level = heading.level
+    let level = heading.level
+
+    // Normalize level if auto-detect is enabled
+    if (autoDetectedLevel !== undefined) {
+      level = level - autoDetectedLevel + 1
+    }
 
     // Handle skipped & ignored levels.
-    if ((settings.firstLevel > level) || (settings.skipTopLevel && level === 1)) {
+    // When auto-detect is enabled, firstLevel needs to be normalized for comparison
+    const normalizedFirstLevel = autoDetectedLevel !== undefined
+      ? settings.firstLevel - autoDetectedLevel + 1
+      : settings.firstLevel
+
+    if ((normalizedFirstLevel > level) || (settings.skipTopLevel && level === 1)) {
       // Resets the numbering when a level is skipped.
       // Note: This leaves headings as they are, allowing people to have numbers at the start of
       // ignored headings.
@@ -107,6 +136,10 @@ export const updateHeadingNumbering = (
         previousLevel = settings.firstLevel
       } else if (settings.skipTopLevel) {
         previousLevel = 2
+      } else if (autoDetectedLevel !== undefined) {
+        previousLevel = autoDetectedLevel
+      } else if (firstHeadingLevel !== undefined && firstHeadingLevel > 1) {
+        previousLevel = firstHeadingLevel
       }
       continue
     }

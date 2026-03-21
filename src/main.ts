@@ -139,6 +139,17 @@ class NumberHeadingsPluginSettingTab extends PluginSettingTab {
         }))
 
     new Setting(containerEl)
+      .setName('Auto-detect top heading level')
+      .setDesc('Automatically detect the topmost heading level in the document and start numbering from that level.')
+      .addToggle(toggle => toggle
+        .setValue(this.plugin.settings.autoDetectTopLevel)
+        .setTooltip('Auto-detect top heading level')
+        .onChange(async (value) => {
+          this.plugin.settings.autoDetectTopLevel = value
+          await this.plugin.saveSettings()
+        }))
+
+    new Setting(containerEl)
       .setName('Start numbering at')
       .setDesc('Start numbering the first heading level from this value.')
       .addText(text => text

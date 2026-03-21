@@ -3,6 +3,7 @@ import { isValidAlphabetNumberingValueString, isValidArabicNumberingValueString,
 export interface NumberHeadingsPluginSettings {
   skipTopLevel: boolean,
   firstLevel: number,
+  autoDetectTopLevel: boolean,
   maxLevel: number,
   styleLevel1: NumberingStyle,
   styleLevelOther: NumberingStyle,
@@ -17,6 +18,7 @@ export interface NumberHeadingsPluginSettings {
 export const DEFAULT_SETTINGS: Readonly<NumberHeadingsPluginSettings> = {
   skipTopLevel: false,
   firstLevel: 1,
+  autoDetectTopLevel: false,
   maxLevel: 6,
   styleLevel1: '1',
   styleLevelOther: '1',
@@ -24,7 +26,7 @@ export const DEFAULT_SETTINGS: Readonly<NumberHeadingsPluginSettings> = {
   separator: '',
   contents: '',
   skipHeadings: '',
-  startAt: '',
+  startAt: '1',
   off: false
 }
 
