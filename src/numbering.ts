@@ -69,6 +69,34 @@ function replaceRangeEconomically(editor: Editor, changes: EditorChange[], range
   }
 }
 
+function getInitialPreviousLevel(
+  settings: NumberHeadingsPluginSettings,
+  autoDetectedLevel: number | undefined,
+  firstHeadingLevel: number | undefined
+): number {
+  if (settings.firstLevel > 1) {
+    if (autoDetectedLevel !== undefined) {
+      return settings.firstLevel - autoDetectedLevel + 1
+    }
+    return settings.firstLevel
+  }
+
+  if (settings.skipTopLevel) {
+    return 2
+  }
+
+  // Once levels are normalized, the first visible heading should start at level 1.
+  if (autoDetectedLevel !== undefined) {
+    return 1
+  }
+
+  if (firstHeadingLevel !== undefined && firstHeadingLevel > 1) {
+    return firstHeadingLevel
+  }
+
+  return 1
+}
+
 export const updateHeadingNumbering = (
   viewInfo: ViewInfo | undefined,
   settings: NumberHeadingsPluginSettings
@@ -97,15 +125,7 @@ export const updateHeadingNumbering = (
 
   let numberingStack: NumberingToken[] = [startAtOrZerothInStyle(settings.startAt, settings.styleLevel1)]
 
-  if (settings.firstLevel > 1) {
-    previousLevel = settings.firstLevel
-  } else if (settings.skipTopLevel) {
-    previousLevel = 2
-  } else if (autoDetectedLevel !== undefined) {
-    previousLevel = autoDetectedLevel
-  } else if (firstHeadingLevel !== undefined && firstHeadingLevel > 1) {
-    previousLevel = firstHeadingLevel
-  }
+  previousLevel = getInitialPreviousLevel(settings, autoDetectedLevel, firstHeadingLevel)
 
   const changes: EditorChange[] = []
 
@@ -131,16 +151,7 @@ export const updateHeadingNumbering = (
       // ignored headings.
 
       numberingStack = [startAtOrZerothInStyle(settings.startAt, settings.styleLevel1)]
-
-      if (settings.firstLevel > 1) {
-        previousLevel = settings.firstLevel
-      } else if (settings.skipTopLevel) {
-        previousLevel = 2
-      } else if (autoDetectedLevel !== undefined) {
-        previousLevel = autoDetectedLevel
-      } else if (firstHeadingLevel !== undefined && firstHeadingLevel > 1) {
-        previousLevel = firstHeadingLevel
-      }
+      previousLevel = getInitialPreviousLevel(settings, autoDetectedLevel, firstHeadingLevel)
       continue
     }
 
